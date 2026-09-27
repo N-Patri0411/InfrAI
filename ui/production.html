@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Harness · Inference plan</title>
+<style>
+:root{--bg:#f4f5f7;--paper:#fff;--ink:#17202b;--muted:#687482;--line:#e1e6eb;--blue:#315fe7;--teal:#087c72;--teal2:#e6f5f1;--red:#b34444;--red2:#fff0ef;--nav:#111b2b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit}button{cursor:pointer}a{color:var(--blue)}
+.top{height:56px;background:var(--nav);color:#fff;display:flex;align-items:center;gap:28px;padding:0 24px}.brand{font-weight:800;letter-spacing:.12em;font-size:13px}.top a{color:#afbacb;text-decoration:none;font-size:13px}.top a.on{color:#fff}
+.wrap{max-width:1400px;margin:auto;padding:24px;display:grid;grid-template-columns:380px minmax(0,1fr);gap:18px;align-items:start}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px}
+h1{font-size:20px;margin:0 0 4px}h2{font-size:14px;margin:18px 0 8px}h2:first-child{margin-top:0}.muted{color:var(--muted);font-size:12px}
+label{display:block;font-size:11px;color:#556171;font-weight:700;margin:8px 0 3px}
+input,select,textarea{width:100%;border:1px solid #dbe1e7;border-radius:7px;padding:7px 9px;background:#fff}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.node{display:grid;grid-template-columns:1.1fr 1.3fr .6fr .7fr 1fr 24px;gap:5px;margin-bottom:6px}.node input,.node select{padding:6px;font-size:12px}
+.x{border:1px solid var(--line);background:#fff;border-radius:6px;color:var(--muted)}
+.btn{border:1px solid #dbe1e7;background:#fff;padding:8px 12px;border-radius:7px;font-weight:700;font-size:12px}.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;width:100%;margin-top:16px;padding:10px}
+.link{border:0;background:none;color:var(--blue);font-weight:700;font-size:12px;padding:4px 0}
+.pill{font-size:10px;text-transform:uppercase;letter-spacing:.06em;border-radius:20px;padding:3px 8px;font-weight:700}.ready{background:var(--teal2);color:var(--teal)}.blocked{background:var(--red2);color:var(--red)}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}.stat{border:1px solid var(--line);border-radius:8px;padding:10px}.stat b{display:block;font-size:14px}.stat span{font-size:11px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:12px}td,th{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:11px}tr.off td{color:#a4acb5}
+.step{border:1px solid var(--line);border-radius:8px;margin-bottom:8px}.step header{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}.step header b{font-size:12px}.step header span{font-size:11px;color:var(--muted)}
+pre{margin:0;white-space:pre-wrap;word-break:break-all;background:#101a29;color:#d7e0ec;padding:12px;border-radius:0 0 8px 8px;font:11px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace}
+pre.file{border-radius:8px;max-height:480px;overflow:auto}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}.tab{border:1px solid var(--line);background:#fff;border-radius:6px;padding:5px 9px;font:11px ui-monospace,monospace}.tab.on{border-color:var(--blue);color:var(--blue)}
+ul.issues{margin:6px 0;padding-left:18px;font-size:12px}ul.issues.bad{color:var(--red)}
+.why{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-top:10px;font-size:13px}.why p{margin:6px 0 0}.why .pill{background:#eef1f4;color:#627080}.traits{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.traits span{font-size:11px;background:#edf2ff;color:#395cb6;border-radius:5px;padding:2px 7px}.why .pill.ready{background:var(--teal2);color:var(--teal)}
+.error{color:var(--red);font-size:12px;margin-top:8px}.empty{color:var(--muted);text-align:center;padding:60px 0}
+@media(max-width:900px){.wrap{grid-template-columns:1fr;padding:16px}.summary{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header class="top"><span class="brand">HARNESS</span><a class="on" href="/production">Plan</a><a href="/performance">Performance</a><a href="/reliability">Reliability</a><a href="/simulation">Simulation</a></header>
+<div class="wrap">
+<form class="card" id="form">
+  <h1>Inference plan</h1>
+  <div class="muted">Hardware + workload in, YAML and shell commands out. Nothing is executed.</div>
+
+  <h2>Hardware</h2>
+  <div class="row">
+    <div><label for="os">OS</label><input id="os" value="Ubuntu 24.04"></div>
+    <div><label for="kube">Kubernetes</label><input id="kube" value="1.32"></div>
+    <div><label for="driver">Driver</label><input id="driver" value="570.86"></div>
+    <div><label for="cuda">CUDA</label><input id="cuda" value="12.8"></div>
+  </div>
+  <label>Nodes (name, GPU, count, VRAM GB, interconnect)</label>
+  <div id="nodes"></div>
+  <button type="button" class="link" id="addNode">+ Add node</button>
+  <details><summary class="muted" style="cursor:pointer">Or paste discovery-script output</summary>
+    <button type="button" class="link" id="getScript">Show discovery script</button>
+    <textarea id="probe" rows="5" style="font:11px ui-monospace,monospace" placeholder="Output of discover-hardware.sh"></textarea>
+    <button type="button" class="btn" id="importProbe">Import</button>
+  </details>
+
+  <h2>Workload</h2>
+  <label for="task">Use case</label><input id="task" value="chat" placeholder="e.g. agentic coding, multi-tenant support chat, nightly batch summaries">
+  <div class="row">
+    <div><label for="ctx">Context tokens</label><input id="ctx" type="number" value="8192"></div>
+    <div><label for="out">Output tokens</label><input id="out" type="number" value="1024"></div>
+    <div><label for="conc">Concurrent requests</label><input id="conc" type="number" value="16"></div>
+    <div><label for="quality">Quality</label><select id="quality"><option value="balanced">Balanced (4B)</option><option value="high">High (8B)</option></select></div>
+  </div>
+  <label for="recipe">Stack</label>
+  <select id="recipe"><option value="">Let the LLM pick</option></select>
+
+  <button class="btn primary" type="submit">Build plan →</button>
+  <div class="error" id="error"></div>
+</form>
+
+<main class="card" id="result"><div class="empty">Fill in the hardware and workload, then build a plan.</div></main>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const GPUS = {"NVIDIA H100": 80, "NVIDIA H200": 141, "NVIDIA A100": 80, "NVIDIA L40S": 48, "NVIDIA A10G": 24, "NVIDIA L4": 24};
+
+function addNode(n = {}) {
+  const row = document.createElement("div");
+  row.className = "node";
+  row.innerHTML = `<input data-k="name" value="${esc(n.name || "gpu-" + ($("nodes").children.length + 1))}">
+    <select data-k="gpu_model">${[...new Set([...Object.keys(GPUS), n.gpu_model || "NVIDIA H100"])].map(g => `<option ${g === n.gpu_model ? "selected" : ""}>${g}</option>`).join("")}</select>
+    <input data-k="gpu_count" type="number" min="0" value="${n.gpu_count ?? 1}">
+    <input data-k="vram_gb" type="number" min="0" value="${n.vram_gb ?? 80}">
+    <select data-k="interconnect">${["NVLink", "PCIe", "unknown"].map(i => `<option ${i === n.interconnect ? "selected" : ""}>${i}</option>`).join("")}</select>
+    <button type="button" class="x" title="Remove">×</button>`;
+  row.querySelector("[data-k=gpu_model]").onchange = e => row.querySelector("[data-k=vram_gb]").value = GPUS[e.target.value];
+  row.querySelector(".x").onclick = () => row.remove();
+  $("nodes").append(row);
+}
+
+function nodes() {
+  return [...$("nodes").children].map(row => {
+    const n = {};
+    row.querySelectorAll("[data-k]").forEach(el => n[el.dataset.k] = el.type === "number" ? Number(el.value) : el.value);
+    return n;
+  });
+}
+
+async function api(path, body) {
+  const res = await fetch("/api/production" + path, body ? {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)} : {});
+  const data = await res.json();
+  if (!res.ok) throw new Error(typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail));
+  return data;
+}
+
+function render(r) {
+  const p = r.plan, a = p.allocation;
+  const placement = Object.entries(a.placement).map(([k, v]) => `${k}: ${v}`).join(", ") || "none";
+  const files = Object.keys(r.files);
+  $("result").innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <h1>${esc(p.stack)}</h1>
+      <div><span class="pill ${r.status}">${r.status}</span>
+      <a class="btn" style="text-decoration:none;margin-left:6px" href="/api/production/plans/${r.plan_id}/download">Download bundle</a></div>
+    </div>
+    <div class="why"><span class="pill ${p.decided_by.startsWith("llm") ? "ready" : ""}">${esc(p.decided_by)}</span>
+      ${p.traits.length ? `<div class="traits">${p.traits.map(t => `<span>${esc(t)}</span>`).join("")}</div>` : ""}
+      <p>${esc(p.recipe_reason)}</p>${p.tradeoffs.length ? `<ul class="issues">${p.tradeoffs.map(t => `<li>${esc(t)}</li>`).join("")}</ul>` : ""}</div>
+    <div class="summary">
+      <div class="stat"><b>${esc(p.model.model_id)}</b><span>${esc(p.model.revision.slice(0, 12))} · ${esc(p.model.license)}</span></div>
+      <div class="stat"><b>${a.replicas} × TP${a.tensor_parallel}</b><span>${esc(placement)}</span></div>
+      <div class="stat"><b>${a.estimated_gib_per_replica} GiB</b><span>estimated per replica</span></div>
+      <div class="stat"><b>${p.engine.max_model_len.toLocaleString()} / ${p.engine.max_num_seqs}</b><span>max_model_len / max_num_seqs</span></div>
+    </div>
+    ${r.memory ? `<div class="why"><span class="pill">Memory · ${r.memory.included.filter(i => i.memory_type === "semantic").length} lessons · ${r.memory.tokens}/${r.memory.budget} tokens</span>
+      ${r.memory.included.filter(i => i.memory_type === "semantic").map(i => `<p class="muted">${esc(i.detail)}</p>`).join("") || `<p class="muted">No lessons recorded on this GPU type yet; the harness adds them as Performance and Reliability work completes.</p>`}</div>` : ""}
+    ${p.blockers.length ? `<h2>Blockers</h2><ul class="issues bad">${p.blockers.map(b => `<li>${esc(b)}</li>`).join("")}</ul>` : ""}
+    <ul class="issues">${p.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul>
+
+    <h2>The six projects</h2>
+    <table><tr><th></th><th>Project</th><th>Version</th><th>Role in this plan</th></tr>
+      ${r.projects.map(x => `<tr class="${x.used ? "" : "off"}"><td>${x.used ? "✓" : "–"}</td><td><a href="${esc(x.repo)}" target="_blank">${esc(x.name)}</a></td><td>${esc(x.version)}</td><td>${x.used ? esc(x.role) : "Not used by this stack"}</td></tr>`).join("")}
+    </table>
+
+    <h2>Shell commands, in order</h2>
+    ${r.steps.map((s, i) => `<div class="step"><header><b>${i + 1}. ${esc(s.title)}</b><span>${esc(s.why)}</span></header><pre>${esc((s.when ? `# only if: ${s.when}\n` : "") + s.commands.join("\n"))}</pre></div>`).join("")}
+    <div class="step"><header><b>Rollback</b><span>Remove the model; add-ons stay installed.</span></header><pre>${esc(r.rollback.join("\n"))}</pre></div>
+
+    <h2>Files</h2>
+    <div class="tabs">${files.map((f, i) => `<button type="button" class="tab ${i ? "" : "on"}" data-f="${esc(f)}">${esc(f)}</button>`).join("")}</div>
+    <pre class="file" id="file"></pre>
+    <h2>Validation</h2>
+    <table>${r.validation.map(c => `<tr><td>${c.ok ? "✓" : "✗"}</td><td><code>${esc(c.file)}</code></td><td>${esc(c.detail)}</td></tr>`).join("")}</table>`;
+  const show = f => { $("file").textContent = r.files[f]; document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t.dataset.f === f)); };
+  document.querySelectorAll(".tab").forEach(t => t.onclick = () => show(t.dataset.f));
+  show(files.find(f => f.endsWith("model.yaml")) || files[0]);
+}
+
+$("form").onsubmit = async e => {
+  e.preventDefault();
+  $("error").textContent = "";
+  const btn = e.target.querySelector("[type=submit]");
+  btn.disabled = true; btn.textContent = $("recipe").value ? "Building…" : "Asking the LLM to pick a stack…";
+  try {
+    render(await api("/plan", {
+      inventory: {os: $("os").value, kubernetes_version: $("kube").value, driver_version: $("driver").value, cuda_version: $("cuda").value, nodes: nodes()},
+      workload: {task: $("task").value, context_tokens: +$("ctx").value, output_tokens: +$("out").value, concurrency: +$("conc").value, quality: $("quality").value, allowed_licenses: ["apache-2.0"]},
+      recipe_id: $("recipe").value || null,
+    }));
+  } catch (err) { $("error").textContent = err.message; }
+  finally { btn.disabled = false; btn.textContent = "Build plan →"; }
+};
+
+$("addNode").onclick = () => addNode();
+$("getScript").onclick = async () => { $("probe").value = (await api("/inventory/discovery")).content; };
+$("importProbe").onclick = async () => {
+  try {
+    const inv = await api("/inventory/import", {format: "probe", data: $("probe").value});
+    $("os").value = inv.os; $("kube").value = inv.kubernetes_version; $("driver").value = inv.driver_version; $("cuda").value = inv.cuda_version;
+    $("nodes").innerHTML = ""; inv.nodes.forEach(addNode);
+  } catch (err) { $("error").textContent = err.message; }
+};
+
+api("/catalog").then(c => Object.entries(c.recipes).forEach(([id, r]) => $("recipe").add(new Option(r.stack, id))));
+addNode({name: "gpu-1", gpu_model: "NVIDIA H100", gpu_count: 4, vram_gb: 80, interconnect: "NVLink"});
+</script>
+</body>
+</html>
